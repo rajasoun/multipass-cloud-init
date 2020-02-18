@@ -1,0 +1,2 @@
+source "$(dirname "${BASH_SOURCE[0]}")/multipass/menu.bash"
+source "$(dirname "${BASH_SOURCE[0]}")/multipass/vm.bash"

@@ -67,7 +67,7 @@ function check_vm_running(){
 }
 
 function choose_action_from_menu(){
-    menu "Multipass Manager" "Provision,Log,Shell,Destroy"
+    menu "Multipass Manager" "Provision,ViewLog,Shell,Destroy"
     choice=$?
     case $choice in 
         1)  check_vm_exists
@@ -77,20 +77,18 @@ function choose_action_from_menu(){
             runtime=$((end-start))
             display_time $runtime
             ;;
-        2)  check_vm_running
-            multipass exec "$VM_NAME" -- tail -f   /var/log/cloud-init-output.log
-            ;;
-        3)
+        2)  echo "Cloud Init Logs Can be Viewed Only when the VM Instance Goes to Running State"
             check_vm_running
+            multipass exec "$VM_NAME" -- tail  -f  /var/log/cloud-init-output.log
+            ;;
+        3)  check_vm_running
             multipass shell "$VM_NAME"
             ;;
-        4)
-            check_vm_running
+        4)  check_vm_running
             multipass delete "$VM_NAME" && multipass purge
             echo "$VM_NAME Destroyed"
             ;;
-        *) 
-            echo "Invalid Input"
+        *) echo "Invalid Input"
             ;;
     esac
 }

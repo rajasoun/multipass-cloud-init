@@ -15,7 +15,6 @@ locale: "en_US.UTF-8"
 # Set the timezone
 timezone: "America/Denver"
 
-
 ## Below is a Hack for MacOS & Multipass Issue
 ## Ref: https://discourse.ubuntu.com/t/troubleshooting-networking-on-macos/12901
 runcmd:

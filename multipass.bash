@@ -86,6 +86,12 @@ function shell() {
     multipass shell "$VM_NAME"
 }
 
+function test_infra(){
+  PY_TEST_COMPOSE="py.test/docker-compose.yml"
+  docker-compose -f  "$PY_TEST_COMPOSE" build
+  docker-compose -f  "$PY_TEST_COMPOSE" run --rm service
+}
+
 function destroy() {
     check_vm_running
     multipass delete "$VM_NAME" && multipass purge
@@ -93,13 +99,14 @@ function destroy() {
 }
 
 function choose_action_from_menu(){
-    menu "Multipass Manager" "Provision,ViewLog,Shell,Destroy"
+    menu "Multipass Manager" "Provision,ViewLog,Shell,TestInfra,Destroy"
     choice=$?
     case $choice in 
         1) provision ;;
         2) view_log ;;
         3) shell ;;
-        4) destroy ;;
+        4) test_infra ;;
+        5) destroy ;;
         *) echo "Invalid Input" ;;
     esac
 }

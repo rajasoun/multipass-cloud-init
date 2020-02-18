@@ -66,33 +66,44 @@ function check_vm_running(){
     #[ !  $(multipass ls | grep "$VM_NAME"  |  awk '{print $2}') = "Running"  ] || echo "Not Ready to Show Log... Exiting"
 }
 
+function provision(){
+    check_vm_exists
+    start=$(date +%s)
+    multipass launch -c"$CPU" -m"$MEMORY" -d"$DISK" -n "$VM_NAME" lts --cloud-init "$CLOUD_INIT_FILE" || return 1
+    end=$(date +%s)
+    runtime=$((end-start))
+    display_time $runtime
+}
+
+function view_log() {
+    echo "Cloud Init Logs Can be Viewed Only when the VM Instance Goes to Running State"
+    check_vm_running
+    multipass exec "$VM_NAME" -- tail  -f  /var/log/cloud-init-output.log
+}
+
+function shell() {
+    check_vm_running
+    multipass shell "$VM_NAME"
+}
+
+function destroy() {
+    check_vm_running
+    multipass delete "$VM_NAME" && multipass purge
+    echo "$VM_NAME Destroyed"
+}
+
 function choose_action_from_menu(){
     menu "Multipass Manager" "Provision,ViewLog,Shell,Destroy"
     choice=$?
     case $choice in 
-        1)  check_vm_exists
-            start=$(date +%s)
-            multipass launch -c"$CPU" -m"$MEMORY" -d"$DISK" -n "$VM_NAME" lts --cloud-init "$CLOUD_INIT_FILE" || exit
-            end=$(date +%s)
-            runtime=$((end-start))
-            display_time $runtime
-            ;;
-        2)  echo "Cloud Init Logs Can be Viewed Only when the VM Instance Goes to Running State"
-            check_vm_running
-            multipass exec "$VM_NAME" -- tail  -f  /var/log/cloud-init-output.log
-            ;;
-        3)  check_vm_running
-            multipass shell "$VM_NAME"
-            ;;
-        4)  check_vm_running
-            multipass delete "$VM_NAME" && multipass purge
-            echo "$VM_NAME Destroyed"
-            ;;
-        *) echo "Invalid Input"
-            ;;
+        1) provision ;;
+        2) view_log ;;
+        3) shell ;;
+        4) destroy ;;
+        *) echo "Invalid Input" ;;
     esac
 }
 
 include "instance.env"
-choose_action_from_menu
+[ "$MENU"  = "FALSE"  ] ||  choose_action_from_menu
 

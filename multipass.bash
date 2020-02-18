@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-#References:
-# https://linuxize.com/post/how-to-set-dns-nameservers-on-ubuntu-18-04/
-# https://discourse.ubuntu.com/t/troubleshooting-networking-on-macos/12901
-# https://github.com/lucaswhitaker22/bash_menus/blob/master/bash_menus/demo.sh
-
 function include () {
     if [[ -f "dev.$1" ]]; then
         # shellcheck disable=SC1090
@@ -56,26 +51,40 @@ function menu() {
     return "$choice"
 }
 
+
+function raise_error(){
+  echo "${1}" >&2
+  exit 1
+}
+
+function check_vm_exists(){
+    [ "$( multipass list | grep -c "$VM_NAME")"   -ne 0  ] && raise_error "VM $VM_NAME Exists. Exiting..."
+}
+
 function check_vm_running(){
-  multipass info "$VM_NAME" || raise_error "Exiting.. "
+    multipass info "$VM_NAME" || raise_error "Exiting.. "
+    #[ !  $(multipass ls | grep "$VM_NAME"  |  awk '{print $2}') = "Running"  ] || echo "Not Ready to Show Log... Exiting"
 }
 
 function choose_action_from_menu(){
-    menu "Multipass Manager" "Provision,Shell,Destroy"
+    menu "Multipass Manager" "Provision,Log,Shell,Destroy"
     choice=$?
     case $choice in 
-        1)  [ "$( multipass list | grep -c "$VM_NAME")"   -ne 0  ] && raise_error "VM Exists. Exiting..."
+        1)  check_vm_exists
             start=$(date +%s)
             multipass launch -c"$CPU" -m"$MEMORY" -d"$DISK" -n "$VM_NAME" lts --cloud-init "$CLOUD_INIT_FILE" || exit
             end=$(date +%s)
             runtime=$((end-start))
             display_time $runtime
             ;;
-        2)
+        2)  check_vm_running
+            multipass exec "$VM_NAME" -- tail -f   /var/log/cloud-init-output.log
+            ;;
+        3)
             check_vm_running
             multipass shell "$VM_NAME"
             ;;
-        3)
+        4)
             check_vm_running
             multipass delete "$VM_NAME" && multipass purge
             echo "$VM_NAME Destroyed"
@@ -88,8 +97,4 @@ function choose_action_from_menu(){
 
 include "instance.env"
 choose_action_from_menu
-
-
-
-
 

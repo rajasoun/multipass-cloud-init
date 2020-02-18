@@ -1,0 +1,29 @@
+#cloud-config
+# vim: syntax=yaml
+
+manage_etc_hosts: true
+
+# Update our packages on first boot, saves us some time
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+
+# Set the locale of the system
+locale: "en_US.UTF-8"
+
+# Set the timezone
+timezone: "America/Denver"
+
+
+## Below is a Hack for MacOS & Multipass Issue
+## Ref: https://discourse.ubuntu.com/t/troubleshooting-networking-on-macos/12901
+runcmd:
+  - cp /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.bak
+  - sed -i -e '13i\\            nameservers:' /etc/netplan/50-cloud-init.yaml
+  - sed -i -e '14i\\                addresses:\ [8.8.8.8, 8.8.4.4]' /etc/netplan/50-cloud-init.yaml
+  - netplan apply
+  - systemd-resolve --status | grep 'DNS Servers' -A2
+  - apt update -y
+  - DEBIAN_FRONTEND=noninteractive apt upgrade -y 
+
+final_message: "The system is finally up, after $UPTIME seconds"
